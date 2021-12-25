@@ -11,20 +11,25 @@ import apple.ambrosia.market.wynncraft.item.uuid.ItemUuidDatabase;
 import apple.ambrosia.market.wynncraft.item.v1.WynnItemV1;
 import apple.utilities.database.SaveFileable;
 import apple.utilities.database.singleton.AppleJsonDatabaseSingleton;
+import apple.utilities.request.AppleJsonFromFile;
 import apple.utilities.util.FileFormatting;
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.slf4j.event.Level;
 
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Type;
 import java.util.*;
 
 public class WynnItemDatabase<Raw extends WynnItemRaw<Raw>, Out extends WynnItem<Out>> implements SaveFileable {
-    private static final String ITEM_DATABASE_NAME = "wynnItemDatabase.json";
+    private static final String ITEM_DATABASE_NAME = "wynnItemDatabase";
+    @SuppressWarnings("rawtypes")
     private static AppleJsonDatabaseSingleton<WynnItemDatabase> databaseManager;
-    private static Map<DatabaseVersion<?, ?>, WynnItemDatabase<?, ?>> databases = new HashMap<>();
+
+    private static final Map<DatabaseVersion<?, ?>, WynnItemDatabase<?, ?>> databases = new HashMap<>();
     private static WynnItemDatabase<WynnItemV1Raw, WynnItemV1> latestDatabase;
 
     private final int versionId = DatabaseVersion.getLatest().version();
@@ -36,18 +41,23 @@ public class WynnItemDatabase<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
     public WynnItemDatabase(List<Out> itemsByName) {
         for (Out item : itemsByName) {
             this.itemsByName.put(item.assignUUID(), item);
-            ItemUuidDatabase.get().addItem(item.getName(),item.uuid);
+            ItemUuidDatabase.get().addItem(item.getName(), item.uuid);
         }
     }
 
     public static void loadAll() throws IOException {
-        Ambrosia.log("Loading Item Database", Level.ERROR, LoggingNames.AMBROSIA);
+        Ambrosia.log("Loading Item Database", Level.INFO, LoggingNames.AMBROSIA);
         Gson gson = Wynncraft.getGson();
 
         databaseManager = new AppleJsonDatabaseSingleton<>(getDataFolder(), FileIOServiceNow.get(), gson);
-        @NotNull Collection<WynnItemDatabase> ds = databaseManager.loadAllNow(WynnItemDatabase.class);
-        for (WynnItemDatabase<?, ?> d : ds) {
-            databases.put(d.getVersion(), d);
+        for (DatabaseVersion<?, ?> d : DatabaseVersion.getVersions()) {
+            Type type = TypeToken.getParameterized(WynnItemDatabase.class, d.getRawClass(), d.getOutClass()).getType();
+            File file = new File(getDataFolder(), getSaveFileName(d.version()));
+            if (!file.exists()) continue;
+            AppleJsonFromFile<WynnItemDatabase<?, ?>> request = new AppleJsonFromFile<>(file, type);
+            WynnItemDatabase<?, ?> database = FileIOServiceNow.get().queue(request, e -> {
+            }).complete();
+            databases.put(database.getVersion(), database);
         }
         latestDatabase = get(DatabaseVersion.getLatest());
         if (latestDatabase == null) {
@@ -55,7 +65,7 @@ public class WynnItemDatabase<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
             databases.put(latestDatabase.getVersion(), latestDatabase);
             latestDatabase.save();
         }
-        Ambrosia.log("Finished loading Item Database", Level.ERROR, LoggingNames.AMBROSIA);
+        Ambrosia.log("Finished loading Item Database", Level.INFO, LoggingNames.AMBROSIA);
     }
 
     private DatabaseVersion<Raw, Out> getVersion() {
@@ -70,16 +80,20 @@ public class WynnItemDatabase<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
     @Nullable
     private Out getItem(UUID itemName) {
         synchronized (itemsByName) {
-            return itemsByName.get(itemName);
+            Object out = itemsByName.get(itemName);
+            System.out.println(out.getClass());
+            return (Out) out;
         }
     }
 
     private void save() {
-        databaseManager.save(this);
+        databaseManager.save(this).complete();
     }
 
     private static <R extends WynnItemRaw<R>, O extends WynnItem<O>> WynnItemDatabase<R, O> get(DatabaseVersion<R, O> version) {
-        return (WynnItemDatabase<R, O>) databases.get(version);
+        @SuppressWarnings("unchecked")
+        WynnItemDatabase<R, O> casted = (WynnItemDatabase<R, O>) databases.get(version);
+        return casted;
     }
 
     private static File getDataFolder() {
@@ -88,6 +102,10 @@ public class WynnItemDatabase<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
 
     @Override
     public String getSaveFileName() {
-        return ITEM_DATABASE_NAME;
+        return getSaveFileName(versionId);
+    }
+
+    public static String getSaveFileName(int versionId) {
+        return FileFormatting.extensionJson(ITEM_DATABASE_NAME + versionId);
     }
 }

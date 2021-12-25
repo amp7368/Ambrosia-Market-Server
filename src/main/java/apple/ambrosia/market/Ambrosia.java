@@ -2,14 +2,15 @@ package apple.ambrosia.market;
 
 import apple.ambrosia.market.logging.ErrorLogger;
 import apple.ambrosia.market.logging.LoggingNames;
-import apple.ambrosia.market.wynncraft.Wynncraft;
 import apple.utilities.logging.AppleLoggerManager;
 import apple.utilities.logging.AppleLoggerName;
 import apple.utilities.util.ArrayUtils;
 import apple.utilities.util.FileFormatting;
 import org.slf4j.LoggerFactory;
 import org.slf4j.event.Level;
+import org.springframework.boot.SpringApplication;
 
+import javax.security.auth.login.LoginException;
 import java.io.File;
 import java.io.IOException;
 import java.text.SimpleDateFormat;
@@ -30,14 +31,19 @@ public class Ambrosia {
         );
     }
 
-    public static void main(String[] args) throws InterruptedException, IOException {
-        new Wynncraft();
-        Thread.sleep(1000);
+    public static void main(String[] args) throws InterruptedException, IOException, LoginException {
+//        Wynncraft.load();
+        log("Starting web server", Level.INFO);
+        SpringApplication spring = new SpringApplication(SpringMain.class);
+        spring.run(args);
+        log("Started web server", Level.INFO, LoggingNames.WEB);
+//        DiscordConfig.load();
+//        new DiscordBot();
     }
 
     public static void log(String msg, Level lvl, LoggingNames... loggerName) {
         System.out.println(msg);
-//        LOGGER.log(msg, lvl, loggerName);
+        LOGGER.log(msg, lvl, loggerName);
     }
 
     public static File getDataFolder() {

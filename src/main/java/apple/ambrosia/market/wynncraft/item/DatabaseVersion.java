@@ -5,6 +5,8 @@ import apple.ambrosia.market.wynncraft.get.WynnItemV1Raw;
 import apple.ambrosia.market.wynncraft.item.v1.WynnItemV1;
 
 import java.lang.reflect.Type;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
@@ -20,8 +22,8 @@ public record DatabaseVersion<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
         versions.put(this.version, this);
     }
 
-    public static DatabaseVersion<WynnItemV1Raw, WynnItemV1> ITEM_1 = new DatabaseVersion<>(1, WynnItemV1Raw.class, WynnItemV1.class, WynnItemV1::new);
     public static Map<Integer, DatabaseVersion<?, ?>> versions = new HashMap<>();
+    public static DatabaseVersion<WynnItemV1Raw, WynnItemV1> ITEM_1 = new DatabaseVersion<>(1, WynnItemV1Raw.class, WynnItemV1.class, WynnItemV1::new);
 
     public static DatabaseVersion<WynnItemV1Raw, WynnItemV1> getLatest() {
         return ITEM_1;
@@ -29,6 +31,10 @@ public record DatabaseVersion<Raw extends WynnItemRaw<Raw>, Out extends WynnItem
 
     public static <Raw extends WynnItemRaw<Raw>, Out extends WynnItem<Out>> DatabaseVersion<Raw, Out> get(int ver) {
         return (DatabaseVersion<Raw, Out>) versions.get(ver);
+    }
+
+    public static Collection<DatabaseVersion<?, ?>> getVersions() {
+        return new ArrayList<>(versions.values());
     }
 
     public Function<Raw, Out> getConstructor() {

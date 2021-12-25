@@ -18,7 +18,7 @@ import java.io.IOException;
 import java.util.UUID;
 
 public class Wynncraft {
-    public Wynncraft() throws IOException {
+    public static void load() throws IOException {
         ItemUuidDatabase.load();
         WynnItemDatabase.loadAll();
     }
