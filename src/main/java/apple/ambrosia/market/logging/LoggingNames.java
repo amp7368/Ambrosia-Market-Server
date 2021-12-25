@@ -8,7 +8,8 @@ public enum LoggingNames implements AppleLoggerName {
     WYNN("wynn"),
     DISCORD("discord"),
     DAEMON("daemon"),
-    FAILURE("failure");
+    FAILURE("failure"),
+    WEB("web");
 
     private final String name;
 

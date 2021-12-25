@@ -32,7 +32,7 @@ public class GetItems {
         Ambrosia.log("Retrieving latest items from url.", Level.INFO, LoggingNames.WYNN);
         response = FileIOServiceNow.get().queue(new AppleJsonFromURL<GetItemsResponse<R, O>>(GET_ITEMS_URL, itemResponseType), e -> {
         }).complete();
-        FileIOServiceNow.get().queueVoid(new AppleJsonToFile(itemsJsonFile, response));
+        FileIOServiceNow.get().queueVoid(new AppleJsonToFile(itemsJsonFile, response)).complete();
         return response.getItems(version);
     }
 

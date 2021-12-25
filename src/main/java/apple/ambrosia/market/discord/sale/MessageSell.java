@@ -12,6 +12,6 @@ public class MessageSell extends MessageTransaction {
 
     @Override
     protected Message makeMessage() {
-        return null;
+        return getItemIcon();
     }
 }

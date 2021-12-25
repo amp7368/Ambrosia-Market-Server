@@ -24,7 +24,7 @@ public abstract class MessageTransaction extends AWDPageGui<AWDGui> implements M
 
         EmbedBuilder meta = embedBuilder();
         meta.setAuthor(item.getOriginal().wynnItemMeta.name);
-
+        meta.setTitle("hmm");
         EmbedBuilder damage = immutables();
 
         messageBuilder.setEmbeds(
@@ -42,6 +42,6 @@ public abstract class MessageTransaction extends AWDPageGui<AWDGui> implements M
 
         }
         DamagePair damage = original.damage.damage;
-        return embedBuilder();
+        return immutable;
     }
 }
